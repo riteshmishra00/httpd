@@ -1,0 +1,44 @@
+<VirtualHost *:443>
+ ServerName localhostorg.in:443
+ SSLEngine on
+ SSLProtocol all -SSLv2 -SSLv3 -TLSv1 -TLSv1.1
+ SSLCipherSuite ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:HIGH:+AES256:+CAMELLIA:+SHA1:+3DES:!aNULL:!DSS:!DH:-AES+SSLv3
+ SSLHonorCipherOrder On
+ 
+ # SSLCertificateFile /etc/httpd/ssl/dmsirm_centralbank_org_in.crt
+ # SSLCertificateKeyFile /etc/httpd/ssl/dmsirmserver.key
+ # SSLCertificateChainFile /etc/httpd/ssl/GeoTrust_Intermediate_certificate.crt
+ # SSLCACertificateFile /etc/httpd/ssl/root_certificate.crt
+
+ SSLCertificateFile /etc/httpd/ssl/new_certificate/org.in.crt
+ SSLCertificateKeyFile /etc/httpd/ssl/new_certificate/server.key
+ SSLCertificateChainFile /etc/httpd/ssl/new_certificate/CA-bundle
+ 
+
+
+
+
+
+
+
+ ProxyRequests On
+
+#ProxyPass / http://0.0.0.1:8080/
+#ProxyPassReverse / http://0.0.0.1:8080/
+
+ProxyPass / balancer://balservers/ stickysession=JSESSIONID nofailover=Off
+
+ProxyPassReverse / balancer://balservers 
+
+ErrorLog logs/error.log
+CustomLog logs/custom.log common
+
+<Proxy balancer://balservers>
+	# Hot-Failover
+	 BalancerMember ajp://0.0.0.1:8009 route=node1 ttl=1200 smax=5
+	# The below is the hot standby
+ 	 BalancerMember ajp://0.0.0.2:8009 route=node2 ttl=1200 smax=5 status=+H
+	ProxySet lbmethod=byrequests
+</Proxy>
+
+</VirtualHost>
